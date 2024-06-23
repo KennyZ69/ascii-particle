@@ -13,12 +13,9 @@ type Particle struct {
 	y float64
 }
 
-func (p *Particle) Reset(params *ParticleParams) {
-
-}
-
+type Reset func(particle *Particle, params *ParticleParams)
 type NextPosition func(particle *Particle, delta int64)
-type Ascii func(x, y int, count [][]int)
+type Ascii func(x, y int, count [][]int) rune
 
 type ParticleParams struct {
 	MaxLife  int64
@@ -31,6 +28,7 @@ type ParticleParams struct {
 
 	nextPosition NextPosition
 	ascii        Ascii
+	reset        Reset
 }
 
 type ParticleSystem struct {
@@ -48,6 +46,12 @@ func NewParticleSystem(params ParticleParams) ParticleSystem {
 	}
 }
 
+func (p *ParticleSystem) Start() {
+	for _, part := range p.particles {
+		p.reset(part, &p.ParticleParams)
+	}
+}
+
 func (p *ParticleSystem) Update() {
 	now := time.Now().UnixMilli()
 	delta := now - p.lastTime
@@ -56,7 +60,7 @@ func (p *ParticleSystem) Update() {
 	for _, part := range p.particles {
 		p.nextPosition(part, delta)
 		if part.y >= float64(p.Y) || part.x >= float64(p.X) {
-			// reset
+			p.reset(part, &p.ParticleParams)
 		}
 	}
 }
@@ -74,5 +78,16 @@ func (p *ParticleSystem) Display() [][]rune {
 	for _, part := range p.particles {
 		row := int(math.Floor(part.y))
 		col := int(math.Floor(part.x))
+
+		count[row][col]++
 	}
+	out := make([][]rune, 0)
+	for r, row := range count {
+		outRow := make([]rune, 0)
+		for c := range row {
+			outRow = append(outRow, p.ascii(r, c, count))
+		}
+		out = append(out, outRow)
+	}
+	return out
 }

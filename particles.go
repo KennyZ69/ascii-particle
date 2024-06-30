@@ -2,6 +2,8 @@ package particles
 
 import (
 	"math"
+	"slices"
+	"strings"
 	"time"
 )
 
@@ -15,7 +17,7 @@ type Particle struct {
 
 type Reset func(particle *Particle, params *ParticleParams)
 type NextPosition func(particle *Particle, delta int64)
-type Ascii func(x, y int, count [][]int) rune
+type Ascii func(x, y int, count [][]int) string
 
 type ParticleParams struct {
 	MaxLife  int64
@@ -40,9 +42,14 @@ type ParticleSystem struct {
 }
 
 func NewParticleSystem(params ParticleParams) ParticleSystem {
+	particles := make([]*Particle, 0)
+	for i := 0; i < params.Count; i++ {
+		particles = append(particles, &Particle{})
+	}
 	return ParticleSystem{
 		ParticleParams: params,
 		lastTime:       time.Now().UnixMilli(),
+		particles:      particles,
 	}
 }
 
@@ -65,7 +72,7 @@ func (p *ParticleSystem) Update() {
 	}
 }
 
-func (p *ParticleSystem) Display() [][]rune {
+func (p *ParticleSystem) Display() string {
 	count := make([][]int, 0)
 
 	for row := 0; row < p.Y; row++ {
@@ -81,13 +88,20 @@ func (p *ParticleSystem) Display() [][]rune {
 
 		count[row][col]++
 	}
-	out := make([][]rune, 0)
+	out := make([][]string, 0)
 	for r, row := range count {
-		outRow := make([]rune, 0)
+		outRow := make([]string, 0)
 		for c := range row {
 			outRow = append(outRow, p.ascii(r, c, count))
 		}
 		out = append(out, outRow)
 	}
-	return out
+
+	slices.Reverse(out)
+	outStr := make([]string, 0)
+	for _, row := range out {
+		outStr = append(outStr, strings.Join(row, ""))
+	}
+
+	return strings.Join(outStr, "\n")
 }

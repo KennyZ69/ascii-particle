@@ -12,8 +12,21 @@ type Art struct {
 	ParticleSystem
 }
 
-func ascii(row, col int, count [][]int) rune {
-	return '}'
+func ascii(row, col int, count [][]int) string {
+	counts := count[row][col]
+	if counts < 3 {
+		return " "
+	}
+	if counts < 6 {
+		return "."
+	}
+	if counts < 9 {
+		return ":"
+	}
+	if counts < 12 {
+		return "{"
+	}
+	return "}"
 }
 
 func reset(p *Particle, params *ParticleParams) {
